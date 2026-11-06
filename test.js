@@ -1,0 +1,12 @@
+process.env.DB_FILE = ':memory:';
+const assert = require('assert'); const db = require('./db'); const { infer, evaluateLoan, validateLoan } = require('./engine');
+const c = db.customer(); const ask = q => infer(q, c, db);
+const cases = [['What is my account balance?','R1'],['Show my recent transactions','R2'],['Am I eligible for a personal loan?','R3'],['What are the required documents for a home loan?','R7'],['What is the interest rate on a loan','R8'],['How can I block my debit card?','R5'],['I lost my credit card','R5'],['What are the bank working hours?','R11'],['How can I transfer money?','R6'],['Where is the nearest ATM','R10'],['hello','R0'],['tell me a joke about pizza',null]];
+cases.forEach(([q, id]) => { const r = ask(q); assert.strictEqual(r.rule ? r.rule.split(':')[0] : null, id, q); console.log('OK', q, '->', r.rule); });
+assert.strictEqual(evaluateLoan({ income: 65000, score: 742, emi: 12000, amount: 500000 }).status, 'eligible');
+assert.strictEqual(evaluateLoan({ income: 40000, score: 580, emi: 0, amount: 100000 }).status, 'not_eligible');
+assert.strictEqual(evaluateLoan({ income: 12000, score: 800, emi: 0, amount: 1000 }).status, 'not_eligible');
+assert.strictEqual(evaluateLoan({ income: 30000, score: 650, emi: 5000, amount: 100000 }).status, 'review');
+assert.ok(Object.keys(validateLoan({})).length >= 5);
+assert.strictEqual(db.transactions('salary').length, 2); assert.strictEqual(db.transactions('', 'Credit').length, 5);
+console.log(ask('Am I eligible for a personal loan?').answer); console.log('ALL TESTS PASSED');
